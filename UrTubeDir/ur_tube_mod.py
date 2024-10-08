@@ -5,22 +5,25 @@ import time
 class User:
     def __init__(self, nickname, password, confirm_pass, age=0):
         self.nickname = nickname
-        if hash(password) == hash(confirm_pass):
+        if password == confirm_pass:
             self.password = hash(password)
         self.age = age
 
     def __str__(self):
         return self.nickname
 
-    def __hash__(self):
-        return hash(self.password)
+    def __eq__(self, other):
+        if isinstance(other, User):
+            return self.nickname == other.nickname
+        elif isinstance(other, str):
+            return self.nickname == other
 
 
 class Video:
-    def __init__(self, title, duration, time_now=0, adult_mode=False):
+    def __init__(self, title, duration, adult_mode=False):
         self.title = title
         self.duration = duration
-        self.time_now = time_now
+        self.time_now = 0
         self.adult_mode = adult_mode
 
     def __str__(self):
@@ -33,7 +36,7 @@ class UrTube:
         self.videos = []
         self.current_user = None
 
-    def register(self, nickname, password, passwrod_confirm, age):
+    def register(self, nickname, password, password_confirm, age):
         # if password != passwrod_confirm:
         #     checker = True
         #     while checker:
@@ -43,34 +46,29 @@ class UrTube:
         #         if password == passwrod_confirm:
         #             checker = False
 
-        some_user = User(nickname, password, passwrod_confirm, age)
-        if len(self.users) > 0:
-            for user in self.users:
-                if user.nickname == nickname:
-                    print(f'Пользователь {nickname} уже существует')
-                    return
-                else:
-                    self.users.append(some_user)
-                    self.log_in(nickname, password)
-        else:
-            self.users.append(some_user)
-            self.log_in(nickname, password)
+        for user in self.users:
+            if user == nickname:
+                print(f'Пользователь {nickname} уже существует')
+                return
+        new_user = User(nickname, password, password_confirm, age)
+        self.users.append(new_user)
+        self.log_in(nickname, password)
+
 
     def log_in(self, nickname, password):
+        hashed_pass = hash(password)
         for user in self.users:
-            if user.nickname == nickname and user.password == hash(password):
+            if user == nickname and user.password == hashed_pass:
                 self.current_user = user
                 break
                 # self.entered_tube()
-            else:
-                print("Access denied.")
 
     def log_out(self):
         self.current_user = None
 
     def add(self, *args):
         if len(self.videos) == 0:
-            self.videos = args
+            self.videos = list(args)
         else:
             for item in args:
                 for video in self.videos:
@@ -80,30 +78,35 @@ class UrTube:
                         self.videos.append(item)
 
     def get_videos(self, any_words):
-        print("See what we have found for you: ")
         # print(self.videos)
         line = []
         for video in self.videos:
             if any_words.lower() in video.title.lower():
-                line.append(video.title)
-        for video in line:
-            print(video)
+                line.append('\n' + video.title)
+        return line
 
     def watch_video(self, video_title):
         if self.current_user == None:
             print("Войдите в аккаунт, чтобы смотреть видео")
             return
-        if self.current_user.adult_mode and self.current_user.age < 18:
-            print("Вам нет 18 лет, пожалуйста покиньте страницу")
-        else:
-            for video in self.videos:
-                if video.title == video_title:
-                    counter = ''
-                    for i in range(video.duration):
-                        counter = counter + str(i + 1) + ' '
-                    print(counter + ' Конец видео')
+        for video in self.videos:
+            if video.title == video_title:
+                if self.access_check(video.adult_mode, self.current_user.age):
+                    print("Вам нет 18, чтобы смотреть это видео")
+                    return
+
+                counter = ''
+                for i in range(video.duration):
+                    counter = counter + str(i + 1) + ' '
+                print(counter + ' Конец видео')
 
     # secondary functions
+
+    def access_check(self, adult_mode, age):
+        if adult_mode and age < 18:
+            return False
+        else:
+            return True
 
     # def entered_tube(self):
     #     exit_button = True

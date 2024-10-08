@@ -5,8 +5,8 @@ v1 = Video('Лучший язык программирования 2024 года
 v2 = Video('Для чего девушкам парень программист?', 10, adult_mode=True)
 ur.add(v1, v2)
 
-print(ur.get_videos('лучший'))
-print(ur.get_videos('ПРОГ'))
+print(*ur.get_videos('лучший'))
+print(*ur.get_videos('ПРОГ'))
 
 ur.watch_video('Для чего девушкам парень программист?')
 ur.register('vasya_pupkin', 'lolkekcheburek',
